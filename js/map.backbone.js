@@ -12,32 +12,52 @@ function get_qs(name) {
     return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
-var Route = Backbone.Model.extend({
-  // A single Route variant. e.g. inbound, outbound, special service.
+var Trip = Backbone.Model.extend({
+  // Trip represents a set of trips that have the same stop sequence.
+  // This is somewhat inverted from GTFS to simplify the GeoJSON.
   defaults: {
     display: true,
     los: 0
   }
 });
 
-var RouteCollection = Backbone.Collection.extend({
-  // All trip variants that belong to an Agency route.
-  model: Route
+var Route = Backbone.Collection.extend({
+  // A Route is a set of related Trips, e.g. by headsign or route description.
+  model: Trip
 })
 
 var AgencyCollection = Backbone.Collection.extend({
-  // All routes belonging to an Agency.
+  // All  of the Trips for an Agency.
   url: 'data/test.geojson',
-  model: Route,
+  model: Trip,
   parse: function(response) {
     return response.features;
   }
 });
 
 var RouteView = Backbone.View.extend({
-  // Route list view.
+  // View for a Route (and all of the Trip groups that belong to that Route).
+  className: 'transvisor-route',
+  template: _.template('<div><input type="checkbox" class="toggle" checked="checked" /><span><%- route_name %></span><button class="only transvisor-float-right transvisor-hover">Show</button></div><ul class="transvisor-routes"></ul>'),
+  initialize: function(options) {
+    this.route_name = options.route_name;
+    this.collection = new AgencyCollection();
+    this.listenTo(this.collection, 'add', this.add_route);
+  },
+  render: function() {
+    this.$el.html(this.template(this));
+    return this;
+  },
+  add_route: function(route) {
+    var view = new TripView({model: route});
+    this.$(".transvisor-routes").append(view.render().el);
+  },
+});
+
+var TripView = Backbone.View.extend({
+  // View for a set of Trips.
   tagName: "li",
-  template: _.template('<input type="checkbox" class="toggle" checked="checked" /><span><%- properties.route_headsign %></span><button class="only cityism-transvisor-hover">Show</button>'),
+  template: _.template('<span><%- properties.trip_headsign %></span><span class="transvisor-float-right">/ <%- properties.direction_id %></span>'),
   events: {
     "click .only"   : "only",
     "click .toggle"     : "toggle",
@@ -68,12 +88,12 @@ var RouteView = Backbone.View.extend({
   }
 });
 
-var RouteMapView = Backbone.View.extend({
+var TripMapView = Backbone.View.extend({
   // Map view.
   initialize: function() {
     this.listenTo(this.model, 'change:display', this.set_display);
     // Use the model's ID as the Leaflet layer class suffix.
-    this.gclass = 'cityism-transvisor-route-' + this.model.cid;
+    this.gclass = 'transvisor-route-' + this.model.cid;
   },
   render: function() {
     this.layer = L.geoJson(this.model.attributes, {
@@ -95,35 +115,41 @@ var RouteMapView = Backbone.View.extend({
 });
 
 var TransvisorApp = Backbone.View.extend({
-  // Overall app View.
+  // App controller.
   initialize: function(options) {
-    this.route_groups = {};
-    this.routes = new AgencyCollection();
-    this.routes.url = options.url;
+    // RouteCollectionViews, keyed by route_short_name.
+    this.routecollections = {};
+    // The overall collection of all Route variants
+    this.collection = new AgencyCollection();
+    this.collection.url = options.url;
     this.leaflet = options.leaflet;
     this.layer = new L.LayerGroup().addTo(this.leaflet); 
-    this.listenTo(this.routes, 'add', this.addOne);
-    this.listenTo(this.routes, 'sync', this.fitall);
-    this.listenTo(this.routes, 'only', this.only);
-    this.routes.fetch();
+    this.listenTo(this.collection, 'add', this.add_route);
+    this.listenTo(this.collection, 'add', this.add_map);
+    this.listenTo(this.collection, 'sync', this.fitall);
+    this.listenTo(this.collection, 'only', this.only);
+    this.collection.fetch();
   },
-  addOne: function(route) {
-    // Add the route to a route group.
-    console.log(route);
-    console.log(route, route.model);
-    console.log(route.get('properties').route_short_name);
-    
-    // Add a Route to the view.
-    var view = new RouteView({model: route});
-    this.$(".cityism-transvisor-routes").append(view.render().el);
-    
+  add_route: function(trip) {
+    // Add the Trip to the RouteView
+    var route_name = trip.get('properties').route_short_name + ': ' + trip.get('properties').route_long_name;
+    var view = this.routecollections[route_name];
+    if (!view) {
+      // Create the view if necessary.
+      var view = new RouteView({route_name: route_name});
+      this.routecollections[route_name] = view
+      this.$el.append(view.render().el);
+    }
+    view.collection.add(trip)
+  },
+  add_map: function(trip) {
     // And also add a second View for the map layer.
-    var view_map = new RouteMapView({model: route});
+    var view_map = new TripMapView({model: trip});
     this.layer.addLayer(view_map.render());
-  },  
-  only: function(route) {
-    this.routes.each(function(i){i.set('display', false)});
-    route.model.set('display', true);
+  },
+  only: function(trip) {
+    this.collection.each(function(i){i.set('display', false)});
+    trip.model.set('display', true);
   },
   fitall: function() {
     // Fit all routes within the map.
