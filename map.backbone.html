@@ -18,14 +18,14 @@
       html, body {
         font-size: 10pt;
       }
-      #cityism-transvisor {
+      #transvisor- {
         margin: 0px;
         width: 350px;
         float: left;
         height: 100%;
         overflow: scroll;
       }
-      #cityism-transvisor-map {
+      #transvisor-map {
         margin: 0px;
         margin-left: 350px;
         height: 100%;
@@ -34,10 +34,8 @@
     
   </head>
   <body>
-      <div id="cityism-transvisor">
-        <ul class="cityism-transvisor-routes"></ul>        
-      </div>
-      <div id="cityism-transvisor-map"></div>
+      <div id="transvisor-"></div>
+      <div id="transvisor-map"></div>
       <div style="clear:both"></div>
 
       <script>  
@@ -48,7 +46,7 @@
   			var mbUrl = 'https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png';
   	    var grayscale = L.tileLayer(mbUrl, {id: 'examples.map-20v6611k', attribution: mbAttr});
   		  var streets = L.tileLayer(mbUrl, {id: 'examples.map-i86knfo3',   attribution: mbAttr});
-    		var leaflet = L.map('cityism-transvisor-map', {
+    		var leaflet = L.map('transvisor-map', {
     			center: [0,0],
     			zoom: 2,
     			layers: [grayscale]
@@ -60,9 +58,8 @@
         L.control.layers(baseLayers).addTo(leaflet);
 
         var agency = get_qs('agency') || 'test';
-        console.log(agency);
         var App = new TransvisorApp({
-          el: $("#cityism-transvisor"),
+          el: $("#transvisor-"),
           leaflet: leaflet,
           url: 'data/' + agency + '.geojson'
         });

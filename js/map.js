@@ -94,11 +94,11 @@ gtfsControl.prototype.fit_all = function() {
 }
 gtfsControl.prototype.hide_all = function() {
   // Hide all routes.
-  $('.cityism-transvisor-route input:checkbox').trigger('off');
+  $('.transvisor-route input:checkbox').trigger('off');
 }
 gtfsControl.prototype.show_all = function() {
   // Show all routes.
-  $('.cityism-transvisor-route input:checkbox').trigger('on');
+  $('.transvisor-route input:checkbox').trigger('on');
 }
 /***** Popups *****/
 gtfsControl.prototype.show_loscontrol = function(elem) {
@@ -148,7 +148,7 @@ gtfsControl.prototype.build = function() {
   
   // Legend
   var legend = $('<div />')
-    .addClass('cityism-transvisor-loscontrol')
+    .addClass('transvisor-loscontrol')
     .appendTo(this.element);
 
   this.show_loscontrol(legend);
@@ -165,7 +165,7 @@ gtfsControl.prototype.build = function() {
   $('<a href="http://ianrees.net" target="_blank" style="display:block;text-align:center">UNDER DEVELOPMENT</a>')
     .appendTo(legend);
 
-  $('<ul />').addClass('cityism-transvisor-routes').appendTo(this.element);
+  $('<ul />').addClass('transvisor-routes').appendTo(this.element);
 }
 gtfsControl.prototype.redraw = function(start, end) {
   for (var route in this.routes) {
@@ -178,7 +178,7 @@ gtfsControl.prototype.redraw = function(start, end) {
 gtfsControl.prototype.redraw_panel = function() {
   var self = this;
   // Clear the list of routes.
-  var ul = $('.cityism-transvisor-routes', this.element);
+  var ul = $('.transvisor-routes', this.element);
   ul.empty();
 
   for (var route in this.routes) {
@@ -205,7 +205,7 @@ gtfsControl.prototype.redraw_panel = function() {
       .data('route', route)
       // Set the background color to the LOS.
       .css('background', LOS[route.los].color)
-      .addClass('cityism-transvisor-route')
+      .addClass('transvisor-route')
       .appendTo(ul);
     
     // Route description
@@ -238,7 +238,7 @@ gtfsControl.prototype.redraw_panel = function() {
         self.map.fitBounds(bounds);
       })
       .css('float', 'right')
-      .addClass('cityism-transvisor-hover')
+      .addClass('transvisor-hover')
       .appendTo(li);
   }
 }

@@ -16,7 +16,7 @@
       html, body {
         font-size: 10pt;
       }
-      #cityism-transvisor-controls {
+      #transvisor-controls {
         margin: 0px;
         width: 350px;
         float: left;
@@ -32,7 +32,7 @@
     
   </head>
   <body>
-      <div id="cityism-transvisor-controls"></div>
+      <div id="transvisor-controls"></div>
       <div id="map"></div>
       <div style="clear:both"></div>
 
@@ -56,7 +56,7 @@
         L.control.layers(baseLayers).addTo(map);
 
         // GTFS Control.
-        var gtfsc = new gtfsControl($('#cityism-transvisor-controls'), map);
+        var gtfsc = new gtfsControl($('#transvisor-controls'), map);
         var agency = get_qs('agency') || 'actransit';
         gtfsc.load_gtfs('data/'+agency+".geojson");
     </script>
