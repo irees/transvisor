@@ -85,14 +85,11 @@ def routeinfo(route, sched=None, planner=False):
 
   for key,trips in unfurled.items():
     trips = sorted(trips, key=lambda trip:(trip.stop_times[0].arrival_time.seconds))
-    print "----- Grouped -----"
+    print "----- Route Group -----"
+    print key
     test_shape_id = set([trip.shape_id for trip in trips])
     test_headsign = set([trip.trip_headsign for trip in trips])
     test_times = [str(trip.stop_times[0].arrival_time) for trip in trips]
-    print key
-    print test_headsign
-    print test_shape_id
-    print test_times
 
     # Make sure all headsigns and shapes match
     try:
@@ -109,12 +106,15 @@ def routeinfo(route, sched=None, planner=False):
     # Trip start times
     print vars(route)
     r = {}
+    r['route_long_name'] = route.route_long_name
     r['route_short_name'] = route.route_short_name
-    r['route_headsign'] = '%s: %s (%s)'%(route.route_short_name, trips[0].trip_headsign, trips[0].direction_id)
     r['route_shape_id'] = trips[0].shape_id
     r['route_stops']    = [stop.stop_id for stop in trips[0].stop_times]
     r['route_schedule'] = [[getattr(stop.arrival_time, 'seconds', None) for stop in trip.stop_times] for trip in trips]
+    r['trip_headsign'] = trips[0].trip_headsign
+    r['direction_id'] = trips[0].direction_id
     r['trip_starts']    = [trip.stop_times[0].arrival_time.seconds for trip in trips]
+    print r
     yield route_as_geo(route=route, trips=trips, info=r, sched=sched, planner=planner)
 
     
