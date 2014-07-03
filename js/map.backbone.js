@@ -38,19 +38,39 @@ var AgencyCollection = Backbone.Collection.extend({
 var RouteView = Backbone.View.extend({
   // View for a Route (and all of the Trip groups that belong to that Route).
   className: 'transvisor-route',
-  template: _.template('<div><input type="checkbox" class="toggle" checked="checked" /><span><%- route_name %></span><button class="only transvisor-float-right transvisor-hover">Show</button></div><ul class="transvisor-routes"></ul>'),
+  template: _.template('<div><input type="checkbox" class="transvisor-toggle" checked="checked" /><span><%- route_name %></span><button class="transvisor-showonly transvisor-float-right transvisor-hover">Only</button></div><ul class="transvisor-route-trips"></ul>'),
+  events: {
+    "click .transvisor-showonly"  : "showonly",
+    "click .transvisor-toggle"    : "toggle",
+  },
   initialize: function(options) {
+    this.display = true;
     this.route_name = options.route_name;
-    this.collection = new AgencyCollection();
-    this.listenTo(this.collection, 'add', this.add_route);
+    this.collection = new Route();
+    this.listenTo(this.collection, 'add', this.add_trip);
+    this.listenTo(this.collection, 'change:display', this.check_display);
   },
   render: function() {
     this.$el.html(this.template(this));
     return this;
   },
-  add_route: function(route) {
-    var view = new TripView({model: route});
-    this.$(".transvisor-routes").append(view.render().el);
+  add_trip: function(trip) {
+    var view = new TripView({model: trip});
+    this.$(".transvisor-route-trips").append(view.render().el);
+  },
+  // 
+  check_display: function() {
+    var display = this.collection.every(function(trip){return trip.get('display')});
+    this.$('.transvisor-toggle').prop('checked', display);
+  },
+  showonly: function() {
+    this.trigger("only", this);
+  },
+  toggle: function(e) {
+    this.display = !this.display;
+    var display = this.display;
+    this.collection.each(function(i){i.set('display', display)});    
+    e.preventDefault();
   },
 });
 
@@ -58,33 +78,9 @@ var TripView = Backbone.View.extend({
   // View for a set of Trips.
   tagName: "li",
   template: _.template('<span><%- properties.trip_headsign %></span><span class="transvisor-float-right">/ <%- properties.direction_id %></span>'),
-  events: {
-    "click .only"   : "only",
-    "click .toggle"     : "toggle",
-  },
-  initialize: function() {
-    this.listenTo(this.model, 'change:display', this.set_display);
-  },
   render: function() {
     this.$el.html(this.template(this.model.attributes));
     return this;
-  },
-  // Model updates.
-  set_display: function(e) {
-    this.model.get('display') ? this.show() : this.hide();
-  },
-  // Update view.
-  toggle: function(e) {
-    this.model.set('display', !this.model.get('display'));
-  },
-  show: function(e) {
-    this.$('.toggle').prop('checked', true);
-  },
-  hide: function(e) {
-    this.$('.toggle').prop('checked', false);
-  },
-  only: function(e) {
-    this.model.trigger('only', this);
   }
 });
 
@@ -118,40 +114,47 @@ var TransvisorApp = Backbone.View.extend({
   // App controller.
   initialize: function(options) {
     // RouteCollectionViews, keyed by route_short_name.
-    this.routecollections = {};
+    this.routes = {};
     // The overall collection of all Route variants
     this.collection = new AgencyCollection();
     this.collection.url = options.url;
     this.leaflet = options.leaflet;
     this.layer = new L.LayerGroup().addTo(this.leaflet); 
-    this.listenTo(this.collection, 'add', this.add_route);
-    this.listenTo(this.collection, 'add', this.add_map);
-    this.listenTo(this.collection, 'sync', this.fitall);
-    this.listenTo(this.collection, 'only', this.only);
+    this.listenTo(this.collection, 'add', this.add_to_route);
+    this.listenTo(this.collection, 'add', this.add_to_map);
+    this.listenTo(this.collection, 'sync', this.fit_all);
     this.collection.fetch();
   },
-  add_route: function(trip) {
+  add_to_route: function(trip) {
     // Add the Trip to the RouteView
     var route_name = trip.get('properties').route_short_name + ': ' + trip.get('properties').route_long_name;
-    var view = this.routecollections[route_name];
+    var view = this.routes[route_name];
     if (!view) {
       // Create the view if necessary.
       var view = new RouteView({route_name: route_name});
-      this.routecollections[route_name] = view
+      this.routes[route_name] = view
+      // Hook up some events.
+      this.listenTo(view, 'only', this.only);
       this.$el.append(view.render().el);
     }
     view.collection.add(trip)
   },
-  add_map: function(trip) {
+  add_to_map: function(trip) {
     // And also add a second View for the map layer.
     var view_map = new TripMapView({model: trip});
     this.layer.addLayer(view_map.render());
   },
-  only: function(trip) {
-    this.collection.each(function(i){i.set('display', false)});
-    trip.model.set('display', true);
+  hide_all: function() {
+    this.collection.each(function(i){i.set('display', false)});    
   },
-  fitall: function() {
+  show_all: function() {
+    this.collection.each(function(i){i.set('display', true)});    
+  },
+  only: function(route) {
+    this.hide_all();
+    route.collection.each(function(i){i.set('display', true)});    
+  },
+  fit_all: function() {
     // Fit all routes within the map.
     var max_ne = 0;
     var max_sw = 0;

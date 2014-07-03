@@ -1,11 +1,11 @@
 html { height: 100% }
 body { height: 100%; margin: 0; padding: 0;}
-.transvisor-routes {
+.transvisor-route-trips {
   padding: 0px;
   margin: 0px;
   list-style: none;
 }
-.transvisor-routes li {
+.transvisor-route-trips li {
   padding: 5px;
   margin: 0px;
   border-bottom: 1px dashed #ccc;
