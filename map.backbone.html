@@ -35,7 +35,7 @@
   </head>
   <body>
       <div id="cityism-transvisor">
-        <ul id="cityism-transvisor-routes"></ul>        
+        <ul class="cityism-transvisor-routes"></ul>        
       </div>
       <div id="cityism-transvisor-map"></div>
       <div style="clear:both"></div>
@@ -59,10 +59,12 @@
     		};
         L.control.layers(baseLayers).addTo(leaflet);
 
-        var Routes = new RouteCollection();
+        var agency = get_qs('agency') || 'test';
+        console.log(agency);
         var App = new TransvisorApp({
           el: $("#cityism-transvisor"),
-          leaflet: leaflet
+          leaflet: leaflet,
+          url: 'data/' + agency + '.geojson'
         });
 
     </script>
