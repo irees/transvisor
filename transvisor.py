@@ -67,7 +67,8 @@ def stopinfo(stop, sched=None):
   yield f
   
 def routeinfo(route, sched=None, planner=False):
-  print "\n===== Route: %s ====="%(route)
+  print "\n===== Route %s: %s ====="%(route.route_short_name, route.route_long_name)
+  
   # Filter by Monday service for now...
   trips = filter(lambda x:x.service.monday, route.trips)
 
@@ -108,6 +109,7 @@ def routeinfo(route, sched=None, planner=False):
     # Trip start times
     print vars(route)
     r = {}
+    r['route_short_name'] = route.route_short_name
     r['route_headsign'] = '%s: %s (%s)'%(route.route_short_name, trips[0].trip_headsign, trips[0].direction_id)
     r['route_shape_id'] = trips[0].shape_id
     r['route_stops']    = [stop.stop_id for stop in trips[0].stop_times]
@@ -137,7 +139,6 @@ if __name__ == "__main__":
 
   # Get routes
   routes = sched.routes
-  print "Routes:", routes
   if args.route:
     routes = [i for i in sched.routes if i.route_id in args.route]
   if args.exclude:
