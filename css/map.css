@@ -1,5 +1,49 @@
 html { height: 100% }
 body { height: 100%; margin: 0; padding: 0;}
+
+/* Most things are controls more than text... Disable highlighting. */
+* {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: -moz-none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+p {
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -o-user-select: text;
+    user-select: text;
+}
+
+.transvisor-hidden {
+  display: none;
+}
+.transvisor-float-right {
+  float: right;
+}
+
+.transvisor-route {
+  position: relative;
+}
+.transvisor-route input, 
+.transvisor-route button {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+.transvisor-route .transvisor-hover {
+  display: none;
+}
+.transvisor-route:hover .transvisor-hover {
+  display: inline;
+}
+.transvisor-route > div {
+  padding: 5px;
+  border-bottom: solid red 1px;;
+}
+
 .transvisor-route-trips {
   padding: 0px;
   margin: 0px;
@@ -9,18 +53,4 @@ body { height: 100%; margin: 0; padding: 0;}
   padding: 5px;
   margin: 0px;
   border-bottom: 1px dashed #ccc;
-}
-.transvisor-route input, 
-.transvisor-route button {
-  margin-left: 10px;
-  margin-right: 10px;
-}
-.transvisor-float-right {
-  float: right;
-}
-.transvisor-route .transvisor-hover {
-  display: none;
-}
-.transvisor-route:hover .transvisor-hover {
-  display:inline;
 }

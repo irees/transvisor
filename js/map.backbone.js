@@ -1,3 +1,4 @@
+// Utility functions.
 function seconds_to_clock(t) {
   function pad(a,b){return([1e15]+a).slice(-b)}
   var h = Math.floor(t/3600);
@@ -12,6 +13,9 @@ function get_qs(name) {
     return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
 }
 
+
+/***** Models *****/
+
 var Trip = Backbone.Model.extend({
   // Trip represents a set of trips that have the same stop sequence.
   // This is somewhat inverted from GTFS to simplify the GeoJSON.
@@ -21,67 +25,45 @@ var Trip = Backbone.Model.extend({
   }
 });
 
-var Route = Backbone.Collection.extend({
+/***** Collections *****/
+
+var TripCollection = Backbone.Collection.extend({
   // A Route is a set of related Trips, e.g. by headsign or route description.
-  model: Trip
-})
+  model: Trip  
+});
 
 var AgencyCollection = Backbone.Collection.extend({
   // All  of the Trips for an Agency.
-  url: 'data/test.geojson',
   model: Trip,
+  url: 'data/test.geojson',
   parse: function(response) {
     return response.features;
   }
 });
 
-var RouteView = Backbone.View.extend({
-  // View for a Route (and all of the Trip groups that belong to that Route).
-  className: 'transvisor-route',
-  template: _.template('<div><input type="checkbox" class="transvisor-toggle" checked="checked" /><span><%- route_name %></span><button class="transvisor-showonly transvisor-float-right transvisor-hover">Only</button></div><ul class="transvisor-route-trips"></ul>'),
-  events: {
-    "click .transvisor-showonly"  : "showonly",
-    "click .transvisor-toggle"    : "toggle",
-  },
-  initialize: function(options) {
-    this.display = true;
-    this.route_name = options.route_name;
-    this.collection = new Route();
-    this.listenTo(this.collection, 'add', this.add_trip);
-    this.listenTo(this.collection, 'change:display', this.check_display);
-  },
-  render: function() {
-    this.$el.html(this.template(this));
-    return this;
-  },
-  add_trip: function(trip) {
-    var view = new TripView({model: trip});
-    this.$(".transvisor-route-trips").append(view.render().el);
-  },
-  // 
-  check_display: function() {
-    var display = this.collection.every(function(trip){return trip.get('display')});
-    this.$('.transvisor-toggle').prop('checked', display);
-  },
-  showonly: function() {
-    this.trigger("only", this);
-  },
-  toggle: function(e) {
-    this.display = !this.display;
-    var display = this.display;
-    this.collection.each(function(i){i.set('display', display)});    
-    e.preventDefault();
-  },
-});
+/***** Views *****/
 
 var TripView = Backbone.View.extend({
   // View for a set of Trips.
   tagName: "li",
-  template: _.template('<span><%- properties.trip_headsign %></span><span class="transvisor-float-right">/ <%- properties.direction_id %></span>'),
+  template: _.template('<span><%- properties.trip_headsign %></span><span class="transvisor-float-right">/ <%- properties.direction_id %><input type="checkbox" class="transvisor-toggletrip transvisor-float-right" checked="checked" /></span>'),
+  events: {
+    "click .transvisor-toggletrip": "toggle",
+  },
+  initialize: function() {
+    this.listenTo(this.model, 'change:display', this.check_display);    
+  },
   render: function() {
     this.$el.html(this.template(this.model.attributes));
     return this;
-  }
+  },
+  check_display: function() {
+    this.$('.transvisor-toggletrip').prop('checked', this.model.get('display'));
+  },
+  toggle: function(e) {
+    e.preventDefault();
+    this.model.set('display', !this.model.get('display'))
+  }  
 });
 
 var TripMapView = Backbone.View.extend({
@@ -110,33 +92,114 @@ var TripMapView = Backbone.View.extend({
   }
 });
 
+var RouteView = Backbone.View.extend({
+  // View for a related set of Trips.
+  className: 'transvisor-route',
+  template: _.template('<div><input type="checkbox" class="transvisor-toggle" checked="checked" /><span class="transvisor-showonly"><%- route_short_name %>: <%- route_long_name %></span></div><ul class="transvisor-hidden transvisor-route-trips"></ul>'),
+  events: {
+    "click .transvisor-showonly": "showonly",    
+    "click .transvisor-showonly": "toggle_expand",
+  },
+  initialize: function(options) {
+    // Display this group?
+    this.display = true;
+    // Route number
+    this.route_short_name = options.route_short_name;
+    this.route_long_name = options.route_long_name;
+    this.route_sort = parseInt(this.route_short_name);
+    if (isNaN(this.route_sort)) {this.route_sort = 0}
+    console.log("this.route_sort:", this.route_sort);
+    
+    // Trip collection
+    this.collection = new TripCollection();
+    // Listen for new Trips, and changes in Trip display.
+    this.listenTo(this.collection, 'add', this.add_trip);
+    this.listenTo(this.collection, 'change:display', this.check_display);
+  },
+  render: function() {
+    // Render the template.
+    this.$el.html(this.template(this));
+    return this;
+  },
+  add_trip: function(trip) {
+    // Add a trip to the collection, and 
+    var view = new TripView({model: trip});
+    this.$(".transvisor-route-trips").append(view.render().el);
+  },
+  // 
+  check_display: function() {
+    var display = this.collection.filter(function(trip){return trip.get('display')});
+    var toggle = this.$('.transvisor-toggle');
+    toggle.prop('indeterminate', false);
+    if (display.length == 0) {
+      toggle.prop('checked', false);
+    } else if (display.length == this.collection.length) {
+      toggle.prop('checked', true);
+    } else {
+      toggle.prop('indeterminate', true);
+    }
+  },
+  showonly: function() {
+    this.trigger("only", this);
+  },
+  toggle_expand: function() {
+    this.$('.transvisor-route-trips').toggle();    
+  },
+  toggle_trips: function(e) {
+    this.display = !this.display;
+    var display = this.display;
+    this.collection.each(function(i){i.set('display', display)});    
+    e.preventDefault();
+  },
+});
+
 var TransvisorApp = Backbone.View.extend({
   // App controller.
   initialize: function(options) {
-    // RouteCollectionViews, keyed by route_short_name.
-    this.routes = {};
-    // The overall collection of all Route variants
+    // RouteViews
+    this.routeviews = [];
+    // AgencyCollection.
     this.collection = new AgencyCollection();
     this.collection.url = options.url;
+    // The Leaflet map, and layer group.
     this.leaflet = options.leaflet;
     this.layer = new L.LayerGroup().addTo(this.leaflet); 
+    // Listen for new Trips and AgencyCollection load completion.
     this.listenTo(this.collection, 'add', this.add_to_route);
     this.listenTo(this.collection, 'add', this.add_to_map);
     this.listenTo(this.collection, 'sync', this.fit_all);
     this.collection.fetch();
   },
   add_to_route: function(trip) {
-    // Add the Trip to the RouteView
-    var route_name = trip.get('properties').route_short_name + ': ' + trip.get('properties').route_long_name;
-    var view = this.routes[route_name];
+    // Add the Trip to the RouteView.
+    var route_short_name = trip.get('properties').route_short_name;
+    var route_long_name = trip.get('properties').route_long_name;
+    // Check if we have a RouteView for this Trip's route_short_name.
+    var view = _.find(this.routeviews, function(i){return i.route_short_name == route_short_name});
     if (!view) {
-      // Create the view if necessary.
-      var view = new RouteView({route_name: route_name});
-      this.routes[route_name] = view
-      // Hook up some events.
-      this.listenTo(view, 'only', this.only);
-      this.$el.append(view.render().el);
+      view = new RouteView({route_short_name: route_short_name, route_long_name: route_long_name});
+      this.routeviews.push(view);
+      // Resort
+      this.routeviews = this.routeviews.sort(function(a,b){
+        if (a.route_sort == b.route_sort) {
+            return a.route_short_name > b.route_short_name ? 1 : -1;        
+        }
+        return a.route_sort > b.route_sort ? 1 : -1;
+      });
+      console.log("Resorted", this.routeviews.map(function(i){return i.route_sort}));
+            
+      // Insert the RouteView into the DOM in the right position.
+      var viewindex = this.routeviews.indexOf(view);
+      console.log("viewindex:", viewindex);
+      if (viewindex > 0) {
+        console.log(this.routeviews[viewindex].$el);
+        this.routeviews[viewindex-1].$el.after(view.render().el)
+      } else {
+        view.render().$el.appendTo(this.$el);
+        //this.$el.append(view.render().el);
+      }
     }
+    // Finally, add it to the routeview.
     view.collection.add(trip)
   },
   add_to_map: function(trip) {
