@@ -1,5 +1,13 @@
-html { height: 100% }
-body { height: 100%; margin: 0; padding: 0;}
+html { 
+  height: 100% 
+}
+body { 
+  height: 100%;
+  font-size: 12pt;
+  margin: 0; 
+  padding: 0;
+  font-family: sans-serif;
+}
 
 /* Most things are controls more than text... Disable highlighting. */
 * {
@@ -18,6 +26,9 @@ p {
     user-select: text;
 }
 
+/***** Transvisor *****/
+
+/* Basics */
 .transvisor-hidden {
   display: none;
 }
@@ -25,32 +36,82 @@ p {
   float: right;
 }
 
+/***** Route *****/
+
 .transvisor-route {
   position: relative;
 }
-.transvisor-route input, 
-.transvisor-route button {
-  margin-left: 10px;
-  margin-right: 10px;
-}
-.transvisor-route .transvisor-hover {
+/* Trip controls */
+.transvisor-route .transvisor-route-controls {
   display: none;
+  position: absolute;
+  top: 2px;
+  right: 2px;
 }
-.transvisor-route:hover .transvisor-hover {
-  display: inline;
-}
-.transvisor-route > div {
-  padding: 5px;
-  border-bottom: solid red 1px;;
+.transvisor-route:hover .transvisor-route-controls {
+  display: block;
 }
 
+.transvisor-route .transvisor-route-direction {
+  margin: 0px;
+  padding: 2px;
+  text-align: right;
+  color: #bbb;
+  font-size: 8pt;
+  font-weight: bold;
+  border-bottom: dashed 1px #eee;
+}
+
+/* Route headers */
+.transvisor-route-info {
+  white-space: nowrap;
+  position: relative;
+  padding: 5px;
+  cursor: pointer;
+  /* Gradients by ColorZilla */
+  background: linear-gradient(to bottom,  
+    rgba(0,0,0,0) 0%,rgba(0,0,0,0.2) 100%);
+}
+.transvisor-route-info:hover {
+  background: linear-gradient(to bottom,  
+    rgba(125,185,232,0) 0%,rgba(30,87,153,0.2) 100%);
+}
+.transvisor-route-info .transvisor-route-short {
+  margin-left: 10px;
+  margin-right: 10px;
+  font-weight: bold;
+  display: inline-block;
+  min-width: 40px;
+}
+.transvisor-route-info .transvisor-route-long {
+  /* Ideas for styles? */
+  width: 240px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Trips */
 .transvisor-route-trips {
+/*  display: none;
+*/
+}
+.transvisor-route-trips > ul {
   padding: 0px;
   margin: 0px;
   list-style: none;
 }
-.transvisor-route-trips li {
+.transvisor-route-trips > ul > li {
   padding: 5px;
   margin: 0px;
-  border-bottom: 1px dashed #ccc;
 }
+
+.transvisor-trip-color {
+  font-size:8pt;
+  text-align: center;
+  padding: 2px;
+  min-width: 70px;
+}
+
+
+
+

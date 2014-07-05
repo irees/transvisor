@@ -70,8 +70,8 @@ def routeinfo(route, sched=None, planner=False):
   print "\n===== Route %s: %s ====="%(route.route_short_name, route.route_long_name)
   
   # Filter by Monday service for now...
-  trips = filter(lambda x:x.service.monday, route.trips)
-
+  trips = filter(lambda x:getattr(x.service, 'monday', None), route.trips)
+    
   # Find each route by the sequence of stops...
   unfurled = {}
   for trip in trips:
