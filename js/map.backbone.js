@@ -122,6 +122,20 @@ var Trip = Backbone.Model.extend({
       }
     }
     return i
+  },
+  get_style: function() {
+    var style =  {
+      weight: 4.0,
+      opacity: 1.0,
+      lineCap: 'butt',      
+      color: this.get('color')
+    }
+    if (this.get('properties').route_type < 3) {
+      style['weight'] = 10;
+      style['dashArray'] = "2,5";
+      style['lineJoin'] = 'miter';
+    }
+    return style
   }
 });
 
@@ -146,7 +160,7 @@ var AgencyCollection = Backbone.Collection.extend({
 var TripView = Backbone.View.extend({
   /***** Trip View *****/
   tagName: "li",
-  template: _.template('<span><%- properties.trip_headsign %></span><input type="checkbox" class="transvisor-trip-toggle transvisor-float-right" checked="checked" /><span class="transvisor-trip-color transvisor-float-right">LOS</span></span>'),
+  template: _.template('<span><%- properties.trip_headsign %></span><input type="checkbox" class="transvisor-trip-toggle transvisor-float-right" checked="checked" /><span class="transvisor-trip-color transvisor-float-right">LOS</span><span class="transvisor-trip-hours transvisor-float-right"></span></span>'),
   events: {
     "click .transvisor-trip-toggle": "toggle",
   },
@@ -157,6 +171,7 @@ var TripView = Backbone.View.extend({
   render: function() {
     this.$el.html(this.template(this.model.attributes));
     this.check_color(); // Set the initial color
+    // this.check_schedule(); // Set the service hours
     return this;
   },
   check_display: function() {
@@ -164,10 +179,19 @@ var TripView = Backbone.View.extend({
       .prop('checked', this.model.get('display'));
   },
   check_color: function() {
-    console.log("setting color:", this.model.get('color'));
     this.$('.transvisor-trip-color')
       .text(LOS[this.model.get('los')].label)
       .css('background-color', this.model.get('color'));
+  },
+  check_schedule: function() {
+    var schedule = this.model.get('properties').route_schedule;
+    var starts = schedule.map(function(i){return i[0]});
+    var ends = schedule.map(function(i){return i[i.length-1]});
+    var start = Math.min.apply(null, starts);
+    var end = Math.min.apply(null, ends);
+    this.$('.transvisor-trip-hours').text(
+      seconds_to_clock(start) + " - " + seconds_to_clock(end)
+    )
   },
   toggle: function(e) {
     e.preventDefault();
@@ -180,35 +204,25 @@ var TripMapView = Backbone.View.extend({
   initialize: function() {
     this.listenTo(this.model, 'change:display', this.set_display);
     this.listenTo(this.model, 'change:color', this.set_color);
-    // Use the model's ID as the Leaflet layer class suffix.
-    this.svg_class = 'transvisor-route-' + this.model.cid;
   },
   render: function() {
     this.layer = L.geoJson(this.model.attributes, {
-      className: this.svg_class,
-      style: {
-        weight: 4.0,
-        opacity: 1.0,
-        color: this.model.get('color')
-      }
+      style: this.model.get_style()
     });
     return this.layer
   },
-  // Model updates.
   set_display: function(e) {
     this.model.get('display') ? this.show() : this.hide();
   },
   set_color: function(e) {
-    this.layer.setStyle({
-      color: this.model.get('color')
-    })  
+    this.show();
   },
   // Update view.
   show: function(e) {
-    $('.'+this.svg_class).show();
+    this.layer.setStyle(this.model.get_style());
   },
   hide: function(e) {
-    $('.'+this.svg_class).hide();
+    this.layer.setStyle({opacity: 0.0});
   }
 });
 

@@ -104,8 +104,10 @@ def routeinfo(route, sched=None, planner=False):
     # Include the trip schedule.
     # Since stop sequence is identical, just store times
     # Trip start times
-    print vars(route)
     r = {}
+    r['route_type'] = route.route_type
+    r['agency_id'] = route.agency_id
+    r['route_desc'] = route.route_desc
     r['route_long_name'] = route.route_long_name
     r['route_short_name'] = route.route_short_name
     r['route_shape_id'] = trips[0].shape_id
@@ -113,7 +115,7 @@ def routeinfo(route, sched=None, planner=False):
     r['route_schedule'] = [[getattr(stop.arrival_time, 'seconds', None) for stop in trip.stop_times] for trip in trips]
     r['trip_headsign'] = trips[0].trip_headsign
     r['direction_id'] = trips[0].direction_id
-    r['trip_starts']    = [trip.stop_times[0].arrival_time.seconds for trip in trips]
+    r['trip_starts'] = [trip.stop_times[0].arrival_time.seconds for trip in trips]
     print r
     yield route_as_geo(route=route, trips=trips, info=r, sched=sched, planner=planner)
 

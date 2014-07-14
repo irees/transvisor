@@ -109,9 +109,14 @@ p {
   font-size:8pt;
   text-align: center;
   padding: 2px;
-  min-width: 70px;
+  min-width: 60px;
+  border-radius: 8px;
 }
-
+.transvisor-trip-hours {
+  font-size: 8pt;
+  text-align: center;
+  padding: 2px;
+}
 
 
 
