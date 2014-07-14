@@ -2,14 +2,23 @@
 /***** Utility functions *****/
 
 // Colors: colorbrewer2.org
+// var colors = [
+//   '#d73027',
+//   '#fc8d59',
+//   '#fee090',
+//   '#e0f3f8',
+//   '#91bfdb',
+//   '#4575b4'
+// ].reverse();
 var colors = [
-  '#d73027', 
-  '#fc8d59', 
-  '#fee090', 
-  '#e0f3f8', 
-  '#91bfdb', 
-  '#4575b4'
-].reverse();
+'#eff3ff',
+'#c6dbef',
+'#9ecae1',
+'#6baed6',
+'#3182bd',
+'#08519c',
+].reverse()
+
 
 // Level of Service definitions.
 var LOS = [{
