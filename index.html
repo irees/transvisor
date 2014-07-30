@@ -36,6 +36,7 @@
   <body>
       <div id="transvisor-">
         <form id="transvisor-service">
+        <input type="hidden" name="agency" />
         <select name="service">
           <option>Weekday</option>
         </select>
@@ -117,12 +118,13 @@
     		};
         L.control.layers(baseLayers).addTo(leaflet);
         
+        var agency = get_qs('agency') || 'test';
+        $("#transvisor-service input[name=agency]").val(agency);
         var start = parseInt(get_qs('start')) || 7 * 3600;
         var end = parseInt(get_qs('end')) || 9 * 3600;
         $("#transvisor-service select[name=start]").val(start);
         $("#transvisor-service select[name=end]").val(end);
 
-        var agency = get_qs('agency') || 'test';
         var App = new TransvisorApp({
           el: $("#transvisor-"),
           leaflet: leaflet,
