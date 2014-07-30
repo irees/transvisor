@@ -103,8 +103,12 @@ var Trip = Backbone.Model.extend({
     color: '#ccc'
   },
   initialize: function(options) {
-    var los_trips = this.calc_trips();
-    var los = this.calc_los(los_trips);
+    // this.calc(options);
+  },
+  calc: function(start, end) {
+    console.log(start, end);
+    var los_trips = this.calc_trips(start, end);
+    var los = this.calc_los(start, end, los_trips);
     var color = LOS[los].color;
     this.set('los_trips', los_trips);
     this.set('los', los);
@@ -112,17 +116,13 @@ var Trip = Backbone.Model.extend({
   },
   calc_trips: function(start, end) {
     // Calculate Level of Service.
-    var start = start || 7 * 3600;
-    var end = end || 9 * 3600;
     var starts = this.get('properties').trip_starts.filter(function(i) {
       return i > start && i <= end
     });
     return starts
   },
-  calc_los: function(starts) {
+  calc_los: function(start, end, starts) {
     // Buses per hour
-    var start = start || 7 * 3600;
-    var end = end || 9 * 3600;
     var headway = ((end-start)/3600 / starts.length) * 3600;
     // Find the LOS.
     for (var i in LOS) {
@@ -324,6 +324,8 @@ var RouteView = Backbone.View.extend({
 var TransvisorApp = Backbone.View.extend({
   /***** App Controller *****/
   initialize: function(options) {
+    this.start = options.start || 7 * 3600;
+    this.end = options.end || 9 * 3600;
     // RouteViews
     this.routeviews = [];
     // MapViews
@@ -343,6 +345,8 @@ var TransvisorApp = Backbone.View.extend({
     this.collection.fetch();
   },
   add_to_route: function(trip) {
+    // Calculate LOS...
+    trip.calc(this.start, this.end);    
     // Add the Trip to the RouteView.
     var route_short_name = trip.get('properties').route_short_name;
     var route_long_name = trip.get('properties').route_long_name;
