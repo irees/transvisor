@@ -45,7 +45,6 @@ class Route(geojson.Feature):
     dtotal = 0
     ttotal = seconds(0)
     s = [stops[i] for i in stop_ids]
-
     # Use stop 0 -> stop 0 to set initial stop_time
     for a,b in zip([s[0]]+s[0:-1], s):
       d = haversine.haversine(a.geometry.coordinates, b.geometry.coordinates)
