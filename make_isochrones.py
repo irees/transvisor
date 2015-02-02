@@ -42,22 +42,20 @@ if __name__ == "__main__":
   print "Known stop_ids:", ", ".join(stop_ids)
   args.stop_ids = args.stop_ids or stop_ids
   print "Using stop_ids:", ", ".join(args.stop_ids)
+
+  args.banned = args.banned or []
   
   stops = [stop for stop in stops if stop['stop_id'] in args.stop_ids]
   for stop in stops:
     print "======= Creating isochrone for stop:", stop
     print "Trying with banned:", args.banned
     kw = {}
+    if args.banned:
+      kw['bannedAgencies'] = ",".join(args.banned)
+      
     surface = postjson(args.host,
       "otp/surfaces",
       fromPlace=fjoin([stop['stop_lat'], stop['stop_lon']]),
-      bannedAgencies=",".join(args.banned),
-      # walkBoardCost=0,
-      # maxWalkDistance=3000,
-      # walkReluctance=1,
-      # transferPenalty=0,
-      # minTransferTime=0,
-      # maxTransfers=10,
       clampInitialWait=3600,
       cutoffMinutes=args.cutoff,
       date=args.date,
